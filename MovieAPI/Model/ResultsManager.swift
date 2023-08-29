@@ -8,46 +8,83 @@
 import Foundation
 
 
-protocol SearchManagerProtocol {
-    func config(results: Movies)
-}
+//protocol SearchManagerProtocol {
+//    func config(results: Movies)
+//}
 
 protocol GenreManagerProtocol {
     func config(genres : [String?])
 }
 
-struct ResultsManager{
-    var searchDelegate: SearchManagerProtocol?
+struct ResultsManager {
+//    var searchDelegate: SearchManagerProtocol?
     var genreDelegate : GenreManagerProtocol?
     
-    func fetchAllMovies (genre: String? = nil) {
+    func fetchAllMovies(genre: String? = nil, completion: @escaping ((Movies) -> Void)) {
         var url = "https://moviesdatabase.p.rapidapi.com/titles?info=base_info"
         if genre != nil {
             url += "&genre=\(genre!)"
         }
-        performFetch(with : url, api : "showAllMovies")
+//        performFetch(with : url, api : "showAllMovies", completion: )
+        performFetch(with: url, api: "showAllMovies") { movies in
+            completion(movies)
+        }
     }
     
-    func fetchMovieSearch( title : String, genre: String? = nil) {
-       
+    func fetchMovieSearch( title : String, genre: String? = nil, completion: @escaping ((Movies) -> Void)) {
+
         let formattedTitle = title.replacingOccurrences(of: " ", with: "%20")
         var url = "https://moviesdatabase.p.rapidapi.com/titles/search/title/\(formattedTitle)?exact=false&info=base_info"
         
         if genre != nil {
             url += "&genre=\(genre!)"
         }
-        print(url)
-        performFetch(with : url, api : "searchTitle")
+     
+        performFetch(with: url, api: "searchTitle") { movies in
+            completion(movies)
+        }
     }
 
-    func fetchGenres() {
+    func fetchGenres(completion: @escaping ((Genres) -> Void)) {
         let url = "https://moviesdatabase.p.rapidapi.com/titles/utils/genres"
-        performFetch(with : url, api : "utilGenres")
+//        performFetch(with : url, api : "utilGenres")
+        performFetchGenres(with : url, api : "utilGenres"){ genres in
+            completion(genres)
+            
+        }
     }
-
-
-
-    func performFetch( with urlString : String, api: String){
+    
+    private func performFetchGenres(with : String, api : String, completion: @escaping ((Genres) -> Void)){
+        if let url = URL(string : with) {
+            
+            let session = URLSession(configuration: .default)
+            
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.allHTTPHeaderFields = [
+                "X-RapidAPI-Key": "46d53d410bmshc0d6e6f6f138093p1e48cejsn4b7012c723ac",
+                "X-RapidAPI-Host": "moviesdatabase.p.rapidapi.com"
+            ]
+            
+            let task = session.dataTask(with: request) {
+                data, response, error in
+                
+                
+                if (error != nil) {
+                    print(error!)
+                    return
+                }
+                
+                if let safeData = data {
+                    if let APIresults = self.parseGenresJSON(genreData: safeData) {
+                        completion(Genres(results: APIresults))
+                    }
+                }
+            }
+            task.resume()
+        }
+    }
+    private func performFetch( with urlString : String, api: String, completion: @escaping ((Movies) -> Void)){
 
     if let url = URL(string : urlString) {
         
@@ -73,8 +110,8 @@ struct ResultsManager{
                 switch api {
                 case "searchTitle":
                     if let APIresults = self.parseMoviesSearchJSON(searchTitleData: safeData) {
-                        self.searchDelegate?.config(results: APIresults)
-                        
+//                        self.searchDelegate?.config(results: APIresults)
+                        completion(APIresults)
                     }
                 case "utilGenres":
                     if let APIresults = self.parseGenresJSON(genreData: safeData) {
@@ -82,7 +119,8 @@ struct ResultsManager{
                     }
                 case "showAllMovies" :
                     if let APIresults = self.parseMoviesSearchJSON(searchTitleData: safeData) {
-                        self.searchDelegate?.config(results: APIresults)
+//                        self.searchDelegate?.config(results: APIresults)
+                        completion(APIresults)
                         
                     }
                 default:

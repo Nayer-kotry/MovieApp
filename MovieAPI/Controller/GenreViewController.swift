@@ -7,42 +7,50 @@
 
 import UIKit
 
-class GenreViewController: UIViewController, GenreManagerProtocol {
+class GenreViewController: UIViewController{
 
 
     @IBOutlet weak var tableView: UITableView!
     
     @IBOutlet weak var titleNav: UINavigationItem!
     
-    var genres : [String?] = []
+    var genres : Genres?
     
     var selectedCell : String?
+    
+    let viewModel: GenreViewModel = GenreViewModel()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
    
-        var manager = ResultsManager()
-        manager.genreDelegate = self
+        //var manager = ResultsManager()
+        //manager.genreDelegate = self
         tableView.dataSource = self
         tableView.delegate = self
-        manager.fetchGenres()
-    }
-    
-    func config(genres: [String?]) {
-        self.genres = genres
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
+        viewModel.loadGenres {  genres in
+            self.genres = genres
+            DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                  }
         }
     }
+    
+//    func config(genres: [String?]) {
+//        self.genres = genres
+//        DispatchQueue.main.async {
+//            self.tableView.reloadData()
+//        }
+//    }
     
 }
 extension GenreViewController : UITableViewDataSource{
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return genres.count
+        return viewModel.getGenres()?.results.count ?? 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "GenreCell", for: indexPath)
-        let data = genres[indexPath.row]
+        let data = viewModel.getGenres()?.results[indexPath.row]
         DispatchQueue.main.async {
             if data != nil {
                 cell.textLabel?.text = data
@@ -59,7 +67,7 @@ extension GenreViewController : UITableViewDataSource{
 extension GenreViewController : UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-         selectedCell = genres[indexPath.row]
+        selectedCell = viewModel.getGenres()?.results[indexPath.row]
         performSegue(withIdentifier: "GenreSegue", sender: self)
         
         

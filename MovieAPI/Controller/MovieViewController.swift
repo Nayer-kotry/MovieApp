@@ -42,54 +42,52 @@ class MovieViewController: UIViewController{
     var writers : [String] = []
     var creators : [String] = []
     var imageURL: String?
-
+    let movieViewModel = MovieViewModel()
     //MARK: - UI lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        var MovieManager = MovieResultManager()
+        //var MovieManager = MovieResultManager()
 //        if id != nil {
 //            MovieManager.fetchByTitleID(id:self.id!)
 //        }
-        MovieManager.actorNamesDelegate = self
-        MovieManager.fetchDirectorsByTitleID(id: self.id!, info: ["extendedCast","creators_directors_writers"], imageURL: imageURL)
-        
-        
+        //MovieManager.actorNamesDelegate = self
+        //MovieManager.fetchDirectorsByTitleID(id: self.id!, info: ["extendedCast","creators_directors_writers"], imageURL: imageURL)
+   
+        movieViewModel.loadCast(id: self.id!, info:  ["extendedCast","creators_directors_writers"], imageURL: imageURL) { cast, imageData in
+          
+            self.actors = cast[0] ?? []
+            self.directors = cast[1] ?? []
+            self.writers = cast[2] ?? []
+            self.creators = cast[3] ?? []
+            self.config(imageData)
+        }
+     
         
     }
     
     //MARK: - Functions
     
- 
-}
-
-extension MovieViewController : ActorNamesDelegate {
-    
-    func config(actorNames: ActorNames?) {
-        print("hi")
-    }
-
-
-    func config(data: Test?, imageData:Data?) {
-        let actorNames = data?.actorNames
-        let creatorNames = data?.cast
-        
-        
-         directors = getCastNames(type: "directors", cast: creatorNames!)
-         writers = getCastNames(type: "writers", cast: creatorNames!)
-         creators = getCastNames(type: "creators", cast: creatorNames!)
-        
-        if let arrayOfActors = actorNames?.results?.cast?.edges {
-            
-            actors = arrayOfActors.map{
-                if let name =   $0?.node?.name?.nameText?.text {
-                    return name
-                }
-                return ""
-                
-            }
-        }
-        
+    func config(_ imageData:Data? = nil) {
+//        let actorNames = data?.actorNames
+//        let creatorNames = data?.cast
+//
+//
+//         directors = getCastNames(type: "directors", cast: creatorNames!)
+//         writers = getCastNames(type: "writers", cast: creatorNames!)
+//         creators = getCastNames(type: "creators", cast: creatorNames!)
+//
+//        if let arrayOfActors = actorNames?.results?.cast?.edges {
+//
+//            actors = arrayOfActors.map{
+//                if let name =   $0?.node?.name?.nameText?.text {
+//                    return name
+//                }
+//                return ""
+//
+//            }
+//        }
+//
         DispatchQueue.main.async {
             
             self.castLabel.text = "Cast: \(self.actors.joined(separator: " - "))"
@@ -125,30 +123,48 @@ extension MovieViewController : ActorNamesDelegate {
            
         }
     }
+ 
+
+
+//extension MovieViewController : ActorNamesDelegate {
+//
+//    func config(actorNames: ActorNames?) {
+//        print("hi")
+//
+//
+//    }
+//
+//    func observe(completion: (() -> Void)?) {
+//        print("Hello World")
+//        completion?()
+//    }
+//
+
+  
     
-    func getCastNames(type: String, cast: CreatorResults) -> [String] {
-        var array: [CreditsInfo?] = []
-        var resultArray: [String] = []
-
-        switch type {
-        case "creators":
-            array = cast.creators
-        case "directors":
-            array = cast.directors
-        case "writers":
-            array = cast.writers
-        default:
-            print("error")
-        }
-
-        if let arrayofCredits = array.compactMap({ $0?.credits }).first {
-            resultArray = arrayofCredits.compactMap {
-                $0?.name?.nameText?.text ?? ""
-            }
-        }
-
-        return resultArray
-    }
+//    func getCastNames(type: String, cast: CreatorResults) -> [String] {
+//        var array: [CreditsInfo?] = []
+//        var resultArray: [String] = []
+//
+//        switch type {
+//        case "creators":
+//            array = cast.creators
+//        case "directors":
+//            array = cast.directors
+//        case "writers":
+//            array = cast.writers
+//        default:
+//            print("error")
+//        }
+//
+//        if let arrayofCredits = array.compactMap({ $0?.credits }).first {
+//            resultArray = arrayofCredits.compactMap {
+//                $0?.name?.nameText?.text ?? ""
+//            }
+//        }
+//
+//        return resultArray
+//    }
 
 }
 

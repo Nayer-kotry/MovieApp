@@ -8,20 +8,20 @@
 import Foundation
 
 
-protocol ActorNamesDelegate {
-    func config(actorNames: ActorNames?)
-    func config(data: Test?, imageData: Data?)
-}
+//protocol ActorNamesDelegate {
+//    func config(actorNames: ActorNames?)
+//    func config(data: Test?, imageData: Data?)
+//}
 
 
 struct MovieResultManager {
     
-    var actorNamesDelegate: ActorNamesDelegate?
+    //var actorNamesDelegate: ActorNamesDelegate?
     
   
    
-    func fetchDirectorsByTitleID (id: String, info: [String], imageURL: String? = nil) {
-        
+    func fetchDirectorsByTitleID (id: String, info: [String], imageURL: String? = nil,  completion: @escaping ((Test?,Data?) -> Void)) {
+
         var urls : [String] = []
         for inf in info {
             urls.append("https://moviesdatabase.p.rapidapi.com/titles/\(id)/?info=\(inf)")
@@ -59,11 +59,12 @@ struct MovieResultManager {
                 
                 if data != nil {
                     
-                    
+               
                     switch info[index]{
                         
                     case "extendedCast":
                         if let actors:ActorNames = parseJSON(data: data!, model: ActorNames.self) {
+                          
                             parsedData.actorNames = actors
                          
                         }
@@ -80,13 +81,14 @@ struct MovieResultManager {
                     }
                     
                 }
-                
+       
             }
-                
+            
             task.resume()
         }
-        group.enter()
+  
         if let imageurl = imageURL {
+            group.enter()
             guard let url = URL(string: imageurl) else {
                 return
             }
@@ -109,8 +111,8 @@ struct MovieResultManager {
             task.resume()
         }
         group.notify(queue: .main) {
-  
-            self.actorNamesDelegate?.config(data: parsedData, imageData: imageData)
+          
+            completion(parsedData,imageData)
         }
         
     }

@@ -7,7 +7,7 @@
 
 import UIKit
 
-class SearchViewController: UIViewController, SearchManagerProtocol {
+class SearchViewController: UIViewController {
  
     
 
@@ -15,19 +15,28 @@ class SearchViewController: UIViewController, SearchManagerProtocol {
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
     
-    var movies : Movies = Movies(results: [])
-    var manager = ResultsManager()
+//    var movies : Movies = Movies(results: [])
+    //var manager = ResultsManager()
     var showLabel : Bool? = false
     var genreSelected : String?
     var cellSelected : MovieCell?
     
+    var viewModel: SearchViewModel = SearchViewModel()
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        manager.searchDelegate = self
+//        manager.searchDelegate = self
         tableView.dataSource = self
         searchBar.delegate = self
-        manager.fetchAllMovies(genre: genreSelected)
+//        manager.fetchAllMovies(genre: genreSelected)
+        
+        viewModel.loadData(withGenre: genreSelected){
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+                
+            }
+        }
+        
         searchBar.placeholder = "Type the name of a movie"
         tableView.register(UINib.init(nibName: "MovieTableViewCell", bundle: nil), forCellReuseIdentifier: "MovieCell")
         tableView.delegate = self
@@ -48,12 +57,18 @@ class SearchViewController: UIViewController, SearchManagerProtocol {
 
     }
 
-    func config(results: Movies){
-        movies = results
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
-    }
+//    func config(results: Movies){
+////        movies = results
+//        viewModel.updateMovies(results) {
+//            DispatchQueue.main.async {
+//                self.tableView.reloadData()
+//            }
+//        }
+//        viewModel.updateMovies(results)
+//        DispatchQueue.main.async {
+//            self.tableView.reloadData()
+//        }
+//    }
         
     
     
@@ -76,9 +91,15 @@ extension SearchViewController: UISearchBarDelegate {
         return true
     }
     func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
-
+        //viewModel.searchBaradsasd
         if let inputMovie = self.searchBar.text {
-            manager.fetchMovieSearch(title: inputMovie, genre: genreSelected)
+            viewModel.loadDataFromSearchWith(Genre: genreSelected,title: inputMovie){
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                    
+                }
+            }
+           // manager.fetchMovieSearch(title: inputMovie, genre: genreSelected)
         }
         searchBar.text = ""
         
@@ -87,12 +108,12 @@ extension SearchViewController: UISearchBarDelegate {
 
 extension SearchViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return movies.results.count
+        return viewModel.getMoviesCount()
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as? MovieTableViewCell {
-            let data = movies.results[indexPath.row]
+            let data = viewModel.getMovie(at: indexPath.row)
             cell.configure(data: data)
             return cell
         }
@@ -107,7 +128,7 @@ extension SearchViewController: UITableViewDataSource {
 extension SearchViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        cellSelected = movies.results[indexPath.row]
+        cellSelected = viewModel.getMovie(at: indexPath.row)
         performSegue(withIdentifier: "movieViewSegue", sender: self)
     }
     
